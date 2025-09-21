@@ -21,6 +21,19 @@ executable Parsifal
     main-is:          Main.hs
     -- other-modules:
     -- other-extensions:
+    default-extensions: 
+      OverloadedStrings
+      MagicHash
+      ScopedTypeVariables
+      LambdaCase
+      TupleSections
+      RecordWildCards
+      BangPatterns
+      PatternSynonyms
+      TypeFamilies
+      OrPatterns
+      ViewPatterns
+      MultilineStrings
     build-depends:    
       base ^>=4.21.0.0,
       primitive,
