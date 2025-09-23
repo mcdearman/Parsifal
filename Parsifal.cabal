@@ -19,8 +19,9 @@ common warnings
 executable Parsifal
     import:           warnings
     main-is:          Main.hs
-    -- other-modules:
-    -- other-extensions:
+    other-modules:
+      Parsifal
+      Parsifal.Internal
     default-extensions: 
       OverloadedStrings
       MagicHash
