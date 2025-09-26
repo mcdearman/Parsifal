@@ -24,6 +24,7 @@ executable Parsifal
       Parsifal.Internal
     default-extensions: 
       OverloadedStrings
+      StrictData
       MagicHash
       ScopedTypeVariables
       LambdaCase
