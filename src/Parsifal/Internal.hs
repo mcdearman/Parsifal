@@ -20,15 +20,19 @@ data GreenNodes = GreenNodes
 
 type ChildWord = Word
 
+{-# INLINE packTok #-}
 packTok :: TokenId -> ChildWord
 packTok (TokenId ix) = (fromIntegral ix `shiftL` 1) .|. 0
 
+{-# INLINE packNode #-}
 packNode :: NodeId -> ChildWord
 packNode (NodeId ix) = (fromIntegral ix `shiftL` 1) .|. 1
 
+{-# INLINE isNode #-}
 isNode :: ChildWord -> Bool
 isNode w = (w .&. 1) /= 0
 
+{-# INLINE childIx #-}
 childIx :: ChildWord -> Int
 childIx w = fromIntegral (w `shiftR` 1)
 
