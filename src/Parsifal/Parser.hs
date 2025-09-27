@@ -17,7 +17,7 @@ node :: Parser Node
 node = Node <$> upperIdent <* symbol "=" <*> rule
 
 rule :: Parser Rule
-rule = lexeme (tokenRule <|> nodeRule <|> sequenceRule <|> altRule <|> optRule <|> repRule)
+rule = lexeme (tokenRule <|> nodeRule <|> sequenceRule <|> altRule <|> optRule <|> repRule <|> parens)
   where
     tokenRule = RuleToken <$> token
     nodeRule = RuleNode <$> node
@@ -25,12 +25,6 @@ rule = lexeme (tokenRule <|> nodeRule <|> sequenceRule <|> altRule <|> optRule <
     altRule = RuleAlt <$> sepBy rule (symbol "|")
     optRule = RuleOpt <$> rule <* symbol "?"
     repRule = RuleRep <$> rule <* symbol "*"
-
-atom :: Parser Rule
-atom = tokenRule <|> nodeRule <|> parens
-  where
-    tokenRule = RuleToken <$> token
-    nodeRule = RuleNode <$> node
     parens = between (symbol "(") (symbol ")") rule
 
 label :: Parser Text
