@@ -11,7 +11,7 @@ import qualified Text.Megaparsec.Char.Lexer as L
 type Parser = Parsec Void Text
 
 grammar :: Parser Grammar
-grammar = undefined
+grammar = Grammar <$> many node
 
 node :: Parser Node
 node = Node <$> upperIdent <* symbol "=" <*> rule
