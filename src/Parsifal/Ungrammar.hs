@@ -16,7 +16,7 @@ newtype Token = Token {tokenName :: Text} deriving (Show, Eq, Ord)
 
 data Rule
   = RuleLabeled Text Rule
-  | RuleNode Node
+  | RuleNode Text
   | RuleToken Token
   | RuleSeq [Rule]
   | RuleAlt [Rule]

@@ -20,7 +20,7 @@ rule :: Parser Rule
 rule = lexeme (tokenRule <|> nodeRule <|> sequenceRule <|> altRule <|> optRule <|> repRule <|> parens)
   where
     tokenRule = RuleToken <$> token
-    nodeRule = RuleNode <$> node
+    nodeRule = RuleNode <$> upperIdent
     sequenceRule = RuleSeq <$> many rule
     altRule = RuleAlt <$> sepBy rule (symbol "|")
     optRule = RuleOpt <$> rule <* symbol "?"
