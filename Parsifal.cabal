@@ -26,7 +26,6 @@ executable Parsifal
       Parsifal.Ungrammar
     default-extensions: 
       OverloadedStrings
-      StrictData
       MagicHash
       ScopedTypeVariables
       LambdaCase

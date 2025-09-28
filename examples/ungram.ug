@@ -7,8 +7,8 @@ Node =
 Rule =
   'ident'
 | 'token_ident'
-| Rule *
-| Rule ( '|' Rule) *
+| Rule*
+| Rule ('|' Rule)*
 | Rule '?'
 | Rule '*'
 | '(' Rule ')'

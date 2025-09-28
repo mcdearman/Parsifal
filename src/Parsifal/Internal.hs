@@ -2,6 +2,7 @@ module Parsifal.Internal where
 
 import Data.Bits (Bits (shiftL, shiftR, (.&.), (.|.)))
 import Data.ByteString (ByteString)
+import Data.Maybe (listToMaybe, mapMaybe)
 import Data.Primitive (PrimArray, SmallArray)
 import Data.Word (Word16)
 
@@ -22,24 +23,24 @@ type ChildWord = Word
 
 {-# INLINE packTok #-}
 packTok :: TokenId -> ChildWord
-packTok (TokenId ix) = (fromIntegral ix `shiftL` 1) .|. 0
+packTok (TokenId !ix) = (fromIntegral ix `shiftL` 1) .|. 0
 
 {-# INLINE packNode #-}
 packNode :: NodeId -> ChildWord
-packNode (NodeId ix) = (fromIntegral ix `shiftL` 1) .|. 1
+packNode (NodeId !ix) = (fromIntegral ix `shiftL` 1) .|. 1
 
 {-# INLINE isNode #-}
 isNode :: ChildWord -> Bool
-isNode w = (w .&. 1) /= 0
+isNode !w = (w .&. 1) /= 0
 
 {-# INLINE childIx #-}
 childIx :: ChildWord -> Int
-childIx w = fromIntegral (w `shiftR` 1)
+childIx !w = fromIntegral (w `shiftR` 1)
 
 data ChildRef = CToken !TokenId | CNode !NodeId
 
 decodeChild :: ChildWord -> ChildRef
-decodeChild w
+decodeChild !w
   | isNode w = CNode (NodeId (childIx w))
   | otherwise = CToken (TokenId (childIx w))
 
@@ -61,3 +62,6 @@ data Tokens = Tokens
   }
 
 newtype SyntaxKind = SyntaxKind Word16 deriving (Show, Eq, Ord)
+
+findMap :: (a -> Maybe b) -> [a] -> Maybe b
+findMap f = listToMaybe . mapMaybe f

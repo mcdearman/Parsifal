@@ -1,11 +1,12 @@
 module Parsifal.Parser (parseGrammar) where
 
 import Control.Applicative (Alternative ((<|>)), empty)
+import Control.Monad.Combinators.Expr (Operator (..), makeExprParser)
 import Data.Functor (($>))
 import Data.Text (Text, pack)
 import Data.Void
 import Parsifal.Ungrammar
-import Text.Megaparsec (MonadParsec (lookAhead, takeWhile1P, takeWhileP, try), Parsec, between, many, parse, some)
+import Text.Megaparsec (MonadParsec (lookAhead, takeWhile1P, takeWhileP, try), Parsec, between, many, parse, some, someTill)
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
 import Text.Megaparsec.Debug (MonadParsecDbg (dbg))
@@ -20,24 +21,51 @@ grammar :: Parser Grammar
 grammar = Grammar <$> ((:) <$> node <*> some node)
 
 node :: Parser Node
-node = Node <$> upperIdent <* symbol "=" <*> rule <* nodeHeaderLA
+node = Node <$> upperIdent <* symbol "=" <*> rule
 
 nodeHeaderLA :: Parser ()
 nodeHeaderLA = lookAhead . try $ upperIdent *> symbol "=" $> ()
 
 rule :: Parser Rule
 rule =
-  dbg "rule" $
-    try sequenceRule
-      <|> try optRule
-      <|> try repRule
-      <|> try atom
-      <|> try altRule
+  dbg "rule" altRule
   where
-    sequenceRule = RuleSeq <$> ((:) <$> atom <*> some rule)
-    altRule = RuleAlt <$> ((:) <$> atom <*> some (symbol "|" *> rule))
-    optRule = RuleOpt <$> atom <* symbol "?"
-    repRule = RuleRep <$> atom <* symbol "*"
+    -- altRule = RuleAlt <$> ((:) <$> seqRule <*> some (symbol "|" *> seqRule))
+    -- seqRule = try (RuleSeq <$> someTill postfix nodeHeaderLA) <|> atom
+    altRule = do
+      x <- seqRule
+      xs <- many (symbol "|" *> seqRule)
+      pure $ case xs of
+        [] -> x
+        _ -> RuleAlt (x : xs)
+
+    seqRule = do
+      xs <- someTill postfix nodeHeaderLA
+      pure $ case xs of
+        [x] -> x
+        _ -> RuleSeq xs
+
+    postfix = do
+      a <- atom
+      -- zero or more postfix operators
+      ops <-
+        many
+          ( RuleOpt <$ symbol "?"
+              <|> RuleRep <$ symbol "*"
+          )
+      pure (foldl' (\r f -> f r) a ops)
+
+-- optRule = RuleOpt <$> atom <* symbol "?"
+-- repRule = RuleRep <$> atom <* symbol "*"
+
+-- altOp :: Operator Parser Rule
+-- altOp = InfixR (mkAlt <$ symbol "|")
+
+-- mkAlt :: Rule -> Rule -> Rule
+-- mkAlt l r = RuleAlt (flatten l <> flatten r)
+--   where
+--     flatten (RuleAlt xs) = xs
+--     flatten x = [x]
 
 atom :: Parser Rule
 atom = try nodeRule <|> try tokenRule <|> parens <|> labelRule

@@ -1,0 +1,20 @@
+grammar = node+
+
+node = upperIdent '=' rule
+
+rule = altRule
+
+altRule = seqRule ('|' seqRule)*
+
+seqRule = atom+
+
+optRule = atom '?'?
+
+repRule = atom '*'?
+
+atom = upperIdent
+     | labelRule
+     | '\'' char* '\''
+     | '(' rule ')'
+
+labelRule = label:('ident' ':') atom
