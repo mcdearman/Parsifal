@@ -2,11 +2,11 @@ module Parsifal.Parser (parseGrammar) where
 
 import Control.Applicative (Alternative ((<|>)), empty)
 import Control.Monad.Combinators.Expr (Operator (..), makeExprParser)
-import Data.Functor (($>))
+import Data.Functor (void, ($>))
 import Data.Text (Text, pack)
 import Data.Void
 import Parsifal.Ungrammar
-import Text.Megaparsec (MonadParsec (lookAhead, takeWhile1P, takeWhileP, try), Parsec, between, many, parse, some, someTill)
+import Text.Megaparsec (MonadParsec (eof, lookAhead, takeWhile1P, takeWhileP, try), Parsec, between, many, parse, some, someTill)
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
 import Text.Megaparsec.Debug (MonadParsecDbg (dbg))
@@ -26,6 +26,11 @@ node = Node <$> upperIdent <* symbol "=" <*> rule
 nodeHeaderLA :: Parser ()
 nodeHeaderLA = lookAhead . try $ upperIdent *> symbol "=" $> ()
 
+barLA, rparenLA, eofLA :: Parser ()
+barLA = lookAhead (void (symbol "|"))
+rparenLA = lookAhead (void (symbol ")"))
+eofLA = lookAhead eof
+
 rule :: Parser Rule
 rule =
   dbg "rule" altRule
@@ -40,7 +45,7 @@ rule =
         _ -> RuleAlt (x : xs)
 
     seqRule = do
-      xs <- someTill postfix nodeHeaderLA
+      xs <- someTill postfix (nodeHeaderLA <|> barLA <|> rparenLA <|> eofLA)
       pure $ case xs of
         [x] -> x
         _ -> RuleSeq xs

@@ -8,9 +8,7 @@ altRule = seqRule ('|' seqRule)*
 
 seqRule = atom+
 
-optRule = atom '?'?
-
-repRule = atom '*'?
+postfix = atom ('?' | '*')?
 
 atom = upperIdent
      | labelRule
