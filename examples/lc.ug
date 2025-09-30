@@ -1,0 +1,11 @@
+// Ungrammar for simply-typed lambda calculus
+
+Term =
+  Var
+| Lam
+| App
+
+Var =
+  identifier
+
+Lam = '\' identifier '.' Term

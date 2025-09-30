@@ -18,7 +18,7 @@ parseGrammar :: Text -> Either (ParseErrorBundle Text Void) Grammar
 parseGrammar = parse grammar ""
 
 grammar :: Parser Grammar
-grammar = Grammar <$> ((:) <$> node <*> some node)
+grammar = Grammar <$> ((:) <$> (sc *> node) <*> some node)
 
 node :: Parser Node
 node = Node <$> upperIdent <* symbol "=" <*> rule
@@ -87,7 +87,10 @@ upperIdent :: Parser Text
 upperIdent = pack <$> lexeme ((:) <$> upperChar <*> many alphaNumChar)
 
 ident :: Parser Text
-ident = pack <$> lexeme ((:) <$> letterChar <*> many alphaNumChar)
+ident = pack <$> lexeme ((:) <$> identStart <*> many identLetter)
+  where
+    identStart = letterChar <|> char '_'
+    identLetter = alphaNumChar <|> char '_'
 
 symbol :: Text -> Parser Text
 symbol = L.symbol sc
