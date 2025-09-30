@@ -21,6 +21,7 @@ executable Parsifal
     main-is:          Main.hs
     other-modules:
       Parsifal
+      Parsifal.Gen
       Parsifal.Internal
       Parsifal.Parser
       Parsifal.Ungrammar

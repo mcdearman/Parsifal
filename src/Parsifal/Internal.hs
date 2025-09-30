@@ -63,5 +63,18 @@ data Tokens = Tokens
 
 newtype SyntaxKind = SyntaxKind Word16 deriving (Show, Eq, Ord)
 
+data SyntaxNode = SyntaxNode
+  { syntaxNodeOffset :: !Int,
+    syntaxNodeParent :: Maybe SyntaxNode,
+    syntaxNodeGreen :: !NodeId
+  }
+  deriving (Show, Eq, Ord)
+
+-- nodeKind :: SyntaxNode -> SyntaxKind
+-- nodeKind node = greenNodeKind (syntaxNodeGreen node)
+
+-- nodeChildren :: SyntaxNode -> [SyntaxNode]
+-- nodeChildren node = undefined
+
 findMap :: (a -> Maybe b) -> [a] -> Maybe b
 findMap f = listToMaybe . mapMaybe f
