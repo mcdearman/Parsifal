@@ -41,6 +41,7 @@ executable Parsifal
     build-depends:    
       base ^>=4.21.0.0,
       primitive,
+      containers,
       bytestring,
       megaparsec,
       parser-combinators,

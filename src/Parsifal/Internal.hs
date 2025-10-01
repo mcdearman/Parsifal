@@ -64,9 +64,9 @@ data Tokens = Tokens
 newtype SyntaxKind = SyntaxKind Word16 deriving (Show, Eq, Ord)
 
 data SyntaxNode = SyntaxNode
-  { syntaxNodeOffset :: !Int,
+  { syntaxNodeOffset :: {-# UNPACK #-} !Int,
     syntaxNodeParent :: Maybe SyntaxNode,
-    syntaxNodeGreen :: !NodeId
+    syntaxNodeGreen :: {-# UNPACK #-} !NodeId
   }
   deriving (Show, Eq, Ord)
 

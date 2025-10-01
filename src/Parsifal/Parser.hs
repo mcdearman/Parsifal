@@ -32,11 +32,8 @@ rparenLA = lookAhead (void (symbol ")"))
 eofLA = lookAhead eof
 
 rule :: Parser Rule
-rule =
-  dbg "rule" altRule
+rule = altRule
   where
-    -- altRule = RuleAlt <$> ((:) <$> seqRule <*> some (symbol "|" *> seqRule))
-    -- seqRule = try (RuleSeq <$> someTill postfix nodeHeaderLA) <|> atom
     altRule = do
       x <- seqRule
       xs <- many (symbol "|" *> seqRule)
@@ -59,18 +56,6 @@ rule =
               <|> RuleRep <$ symbol "*"
           )
       pure (foldl' (\r f -> f r) a ops)
-
--- optRule = RuleOpt <$> atom <* symbol "?"
--- repRule = RuleRep <$> atom <* symbol "*"
-
--- altOp :: Operator Parser Rule
--- altOp = InfixR (mkAlt <$ symbol "|")
-
--- mkAlt :: Rule -> Rule -> Rule
--- mkAlt l r = RuleAlt (flatten l <> flatten r)
---   where
---     flatten (RuleAlt xs) = xs
---     flatten x = [x]
 
 atom :: Parser Rule
 atom = try nodeRule <|> try tokenRule <|> parens <|> labelRule
