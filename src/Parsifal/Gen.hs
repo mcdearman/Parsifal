@@ -1,9 +1,9 @@
 module Parsifal.Gen where
 
-import Data.Set (Set)
-import qualified Data.Set as Set
+import Data.List (nub)
 import Data.Text (Text, pack, splitOn, toUpper)
 import qualified Data.Text as Text
+import Debug.Trace (trace)
 import Parsifal.Ungrammar
 
 genModuleHeader :: Text -> Text
@@ -70,7 +70,19 @@ collectNames :: Grammar -> [Text]
 collectNames g = map nodeName (gramNodes g) <> collectTokenNames
   where
     collectTokenNames :: [Text]
-    collectTokenNames = [handleTokenName $ tokenName t | Node _ r <- gramNodes g, t <- Set.toList $ Set.fromList $ collectTokens r]
+    collectTokenNames = map (handleTokenName . tokenName) grammarTokens
+
+    grammarTokens :: [Token]
+    grammarTokens = nub [t | Node _ r <- gramNodes g, t <- collectRuleTokens r]
+
+    collectRuleTokens :: Rule -> [Token]
+    collectRuleTokens (RuleLabeled _ r) = collectRuleTokens r
+    collectRuleTokens (RuleNode _) = []
+    collectRuleTokens (RuleToken t) = [t]
+    collectRuleTokens (RuleSeq rs) = concatMap collectRuleTokens rs
+    collectRuleTokens (RuleAlt rs) = concatMap collectRuleTokens rs
+    collectRuleTokens (RuleOpt r) = collectRuleTokens r
+    collectRuleTokens (RuleRep r) = collectRuleTokens r
 
     handleTokenName :: Text -> Text
     handleTokenName name =
@@ -88,27 +100,6 @@ collectNames g = map nodeName (gramNodes g) <> collectTokenNames
       where
         capitalize :: Text -> Text
         capitalize txt = toUpper (Text.take 1 txt) <> Text.drop 1 txt
-
-    -- collectTokens :: Rule -> [Token]
-    -- collectTokens r = Set.toList $ go r
-    --   where
-    --     go :: Rule -> Set Token
-    --     go (RuleLabeled _ r') = go r'
-    --     go (RuleNode _) = Set.empty
-    --     go (RuleToken t) = Set.singleton t
-    --     go (RuleSeq rs) = foldMap go rs
-    --     go (RuleAlt rs) = foldMap go rs
-    --     go (RuleOpt r') = go r'
-    --     go (RuleRep r') = go r'
-
-    collectTokens :: Rule -> [Token]
-    collectTokens (RuleLabeled _ r) = collectTokens r
-    collectTokens (RuleNode _) = []
-    collectTokens (RuleToken t) = [t]
-    collectTokens (RuleSeq rs) = concatMap collectTokens rs
-    collectTokens (RuleAlt rs) = concatMap collectTokens rs
-    collectTokens (RuleOpt r) = collectTokens r
-    collectTokens (RuleRep r) = collectTokens r
 
 genSyntaxKindDecls :: [Text] -> Text
 genSyntaxKindDecls names =
