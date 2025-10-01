@@ -3,7 +3,6 @@ module Parsifal.Gen where
 import Data.List (nub)
 import Data.Text (Text, pack, splitOn, toUpper)
 import qualified Data.Text as Text
-import Debug.Trace (trace)
 import Parsifal.Ungrammar
 
 genModuleHeader :: Text -> Text
