@@ -1,7 +1,7 @@
 cabal-version:      3.0
 name:               Parsifal
 version:            0.1.0.0
-synopsis:           An resilient LL parsing library
+synopsis:           A CST and parser generator library
 -- description:
 license:            BSD-3-Clause
 license-file:       LICENSE
