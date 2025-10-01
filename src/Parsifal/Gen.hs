@@ -13,6 +13,16 @@ genModuleHeader moduleName =
       "module " <> moduleName <> " where"
     ]
 
+genImportDecls :: Text
+genImportDecls =
+  Text.unlines
+    [ "import Data.Bits (Bits (shiftL, shiftR, (.&.), (.|.)))",
+      "import Data.ByteString (ByteString)",
+      "import Data.Maybe (listToMaybe, mapMaybe)",
+      "import Data.Primitive (PrimArray, SmallArray)",
+      "import Data.Word (Word16)"
+    ]
+
 genRedGreenTrees :: Text
 genRedGreenTrees =
   Text.unlines
