@@ -13,8 +13,67 @@ genModuleHeader moduleName =
       "module " <> moduleName <> " where"
     ]
 
-genImportDecl :: Text -> Text
-genImportDecl name = "import " <> name
+genRedGreenTrees :: Text
+genRedGreenTrees =
+  Text.unlines
+    [ """
+      data GreenCtx = GreenCtx
+        { greenNodes :: !GreenNodes,
+          greenChildren :: !GreenChildren,
+          tokens :: !Tokens
+        } deriving (Show, Eq, Ord)
+
+      data GreenNodes = GreenNodes
+        { nodeKind :: !(PrimArray SyntaxKind),
+          nodeChildStart :: !(PrimArray Int),
+          nodeChildCount :: !(PrimArray Int),
+          nodeWidth :: !(PrimArray Int)
+        } deriving (Show, Eq, Ord)
+
+      type ChildWord = Word
+
+      {-# INLINE packTok #-}
+      packTok :: TokenId -> ChildWord
+      packTok (TokenId !ix) = (fromIntegral ix `shiftL` 1) .|. 0
+
+      {-# INLINE packNode #-}
+      packNode :: NodeId -> ChildWord
+      packNode (NodeId !ix) = (fromIntegral ix `shiftL` 1) .|. 1
+
+      {-# INLINE isNode #-}
+      isNode :: ChildWord -> Bool
+      isNode !w = (w .&. 1) /= 0
+
+      {-# INLINE childIx #-}
+      childIx :: ChildWord -> Int
+      childIx !w = fromIntegral (w `shiftR` 1)
+
+      pattern Child :: ChildRef -> ChildWord
+      pattern Child cref <- (decodeChild -> cref)
+        where
+          Child (CToken (TokenId ix)) = packTok (TokenId ix)
+          Child (CNode (NodeId ix)) = packNode (NodeId ix)
+
+      newtype NodeId = NodeId Int deriving (Show, Eq, Ord)
+
+      newtype TokenId = TokenId Int deriving (Show, Eq, Ord)
+
+      newtype GreenChildren = GreenChildren (PrimArray ChildWord) deriving (Show, Eq, Ord)
+
+      data Tokens = Tokens
+        { tokKind :: !(PrimArray SyntaxKind),
+          tokText :: !(SmallArray ByteString)
+        } deriving (Show, Eq, Ord)
+
+      newtype SyntaxKind = SyntaxKind Word16 deriving (Show, Eq, Ord)
+
+      data SyntaxNode = SyntaxNode
+        { syntaxNodeOffset :: {-# UNPACK #-} !Int,
+          syntaxNodeParent :: Maybe SyntaxNode,
+          syntaxNodeGreen :: {-# UNPACK #-} !NodeId
+        } deriving (Show, Eq, Ord)
+      """
+    ]
 
 specMap :: [(Text, Text)]
 specMap =
