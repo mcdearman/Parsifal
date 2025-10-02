@@ -1,7 +1,7 @@
 module Main where
 
-import Data.Text (pack)
-import Parsifal.Gen (collectNames, genSyntaxKindDecls)
+import Data.Text (pack, unpack)
+import Parsifal.Gen (genModule)
 import Parsifal.Parser (parseGrammar)
 import Text.Megaparsec (errorBundlePretty)
 import Text.Pretty.Simple (pPrint)
@@ -11,4 +11,5 @@ main = do
   contents <- readFile "examples/rust.ug"
   case parseGrammar (pack contents) of
     Left err -> putStrLn $ "Error parsing grammar: " ++ errorBundlePretty err
-    Right grammar -> pPrint $ genSyntaxKindDecls $ collectNames grammar
+    Right grammar ->
+      writeFile "src/Green.hs" $ genModule grammar "Parsifal.Green"

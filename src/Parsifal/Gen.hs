@@ -1,9 +1,19 @@
-module Parsifal.Gen where
+module Parsifal.Gen (genModule) where
 
 import Data.List (nub)
-import Data.Text (Text, pack, splitOn, toUpper)
+import Data.Text (Text, pack, splitOn, toUpper, unpack)
 import qualified Data.Text as Text
 import Parsifal.Ungrammar
+
+genModule :: Grammar -> Text -> String
+genModule g moduleName =
+  unpack $
+    Text.unlines
+      [ genModuleHeader moduleName,
+        genImportDecls,
+        genRedGreenTrees,
+        genSyntaxKindDecls $ collectNames g
+      ]
 
 genModuleHeader :: Text -> Text
 genModuleHeader moduleName =
@@ -56,6 +66,8 @@ genRedGreenTrees =
       {-# INLINE childIx #-}
       childIx :: ChildWord -> Int
       childIx !w = fromIntegral (w `shiftR` 1)
+
+      data ChildRef = CToken !TokenId | CNode !NodeId
 
       pattern Child :: ChildRef -> ChildWord
       pattern Child cref <- (decodeChild -> cref)
