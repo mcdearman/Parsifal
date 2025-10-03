@@ -1,9 +1,12 @@
+{-# LANGUAGE GeneralisedNewtypeDeriving #-}
+
 module Parsifal.Internal where
 
 import Data.Bits (Bits (shiftL, shiftR, (.&.), (.|.)))
 import Data.ByteString (ByteString)
 import Data.Maybe (listToMaybe, mapMaybe)
-import Data.Primitive (PrimArray, SmallArray)
+import Data.Primitive (Prim, PrimArray, SmallArray)
+import Data.Primitive.PrimArray (indexPrimArray)
 import Data.Word (Word16)
 
 data GreenCtx = GreenCtx
@@ -13,10 +16,10 @@ data GreenCtx = GreenCtx
   }
 
 data GreenNodes = GreenNodes
-  { nodeKind :: !(PrimArray SyntaxKind),
-    nodeChildStart :: !(PrimArray Int),
-    nodeChildCount :: !(PrimArray Int),
-    nodeWidth :: !(PrimArray Int)
+  { nodeKinds :: !(PrimArray SyntaxKind),
+    nodeChildStarts :: !(PrimArray Int),
+    nodeChildCounts :: !(PrimArray Int),
+    nodeWidths :: !(PrimArray Int)
   }
 
 type ChildWord = Word
@@ -37,18 +40,33 @@ isNode !w = (w .&. 1) /= 0
 childIx :: ChildWord -> Int
 childIx !w = fromIntegral (w `shiftR` 1)
 
-data ChildRef = CToken !TokenId | CNode !NodeId
+data NodeChild = CToken !TokenId | CNode !NodeId
 
-decodeChild :: ChildWord -> ChildRef
+decodeChild :: ChildWord -> NodeChild
 decodeChild !w
   | isNode w = CNode (NodeId (childIx w))
   | otherwise = CToken (TokenId (childIx w))
 
-pattern Child :: ChildRef -> ChildWord
+pattern Child :: NodeChild -> ChildWord
 pattern Child cref <- (decodeChild -> cref)
   where
     Child (CToken (TokenId ix)) = packTok (TokenId ix)
     Child (CNode (NodeId ix)) = packNode (NodeId ix)
+
+data GreenNode = GreenNode
+  { nodeKind :: {-# UNPACK #-} !SyntaxKind,
+    nodeChildren :: ![ChildWord],
+    nodeWidth :: {-# UNPACK #-} !Int
+  }
+
+decodeGreenNode :: GreenCtx -> NodeId -> GreenNode
+decodeGreenNode ctx (NodeId ix) =
+  let kind = nodeKinds (greenNodes ctx) `indexPrimArray` ix
+      start = nodeChildStarts (greenNodes ctx) `indexPrimArray` ix
+      count = nodeChildCounts (greenNodes ctx) `indexPrimArray` ix
+      width = nodeWidths (greenNodes ctx) `indexPrimArray` ix
+      children = indexGreenChildren (greenChildren ctx) start count
+   in GreenNode kind children width
 
 newtype NodeId = NodeId Int deriving (Show, Eq, Ord)
 
@@ -56,12 +74,16 @@ newtype TokenId = TokenId Int deriving (Show, Eq, Ord)
 
 newtype GreenChildren = GreenChildren (PrimArray ChildWord)
 
+indexGreenChildren :: GreenChildren -> Int -> Int -> [ChildWord]
+indexGreenChildren (GreenChildren arr) start count =
+  [arr `indexPrimArray` (start + i) | i <- [0 .. count - 1]]
+
 data Tokens = Tokens
-  { tokKind :: !(PrimArray SyntaxKind),
-    tokText :: !(SmallArray ByteString)
+  { tokKinds :: !(PrimArray SyntaxKind),
+    tokTexts :: !(SmallArray ByteString)
   }
 
-newtype SyntaxKind = SyntaxKind Word16 deriving (Show, Eq, Ord)
+newtype SyntaxKind = SyntaxKind Word16 deriving (Show, Eq, Ord, Prim)
 
 data SyntaxNode = SyntaxNode
   { syntaxNodeOffset :: {-# UNPACK #-} !Int,
