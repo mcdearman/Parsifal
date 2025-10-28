@@ -6,6 +6,6 @@ Term =
 | App
 
 Var =
-  'identifier'
+  'ident'
 
 Lam = '\' 'ident' '.' Term
