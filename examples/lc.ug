@@ -8,4 +8,4 @@ Term =
 Var =
   'identifier'
 
-Lam = '\' 'identifier' '.' Term
+Lam = '\' 'ident' '.' Term
