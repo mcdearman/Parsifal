@@ -9,3 +9,5 @@ Var =
   'ident'
 
 Lam = '\' 'ident' '.' Term
+
+App = Term Term*

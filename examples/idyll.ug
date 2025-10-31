@@ -1,0 +1,46 @@
+// Idyll Ungrammar
+
+Expr =
+  Lit
+| Var
+| Let
+| If
+| Match
+| Lam
+| App
+| Infix
+| Neg
+
+Lit =
+  'int'
+| 'string'
+
+Var =
+  'ident'
+
+Let = 'let' Bind '=' Expr 'in' Expr
+
+Bind = Pattern | BindFun
+
+BindFun = 'ident' '(' PatternList ')'
+
+PatternList = Pattern Pattern*
+
+Pattern = 'ident'
+
+If = 'if' Expr 'then' Expr 'else' Expr
+
+Match = 'match' Expr 'with' MatchCase MatchCase*
+
+MatchCase = Pattern '->' Expr
+
+Lam = '\' PatternList  '->' Expr
+
+App = Expr Expr*
+
+Infix = Expr InfixOp Expr
+
+InfixOp =
+  '+' | '-' | '*' | '/' | '==' | '!=' | '<' | '<=' | '>' | '>='
+
+Neg = '-' Expr
