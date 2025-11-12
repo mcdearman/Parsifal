@@ -16,7 +16,7 @@ data GreenCtx = GreenCtx
   }
 
 data GreenNodes = GreenNodes
-  { nodeKinds :: !(PrimArray SyntaxKind),
+  { nodeKinds :: !(PrimArray NodeKind),
     nodeChildStarts :: !(PrimArray Int),
     nodeChildCounts :: !(PrimArray Int),
     nodeWidths :: !(PrimArray Int)
@@ -50,7 +50,7 @@ pattern Child cref <- (decodeChild -> cref)
     Child (CNode (NodeId ix)) = packNode (NodeId ix)
 
 data GreenNode = GreenNode
-  { nodeKind :: {-# UNPACK #-} !SyntaxKind,
+  { nodeKind :: {-# UNPACK #-} !NodeKind,
     nodeChildren :: ![ChildWord],
     nodeWidth :: {-# UNPACK #-} !Int
   }
@@ -75,11 +75,13 @@ indexGreenChildren (GreenChildren arr) start count =
   [arr `indexPrimArray` (start + i) | i <- [0 .. count - 1]]
 
 data Tokens = Tokens
-  { tokKinds :: !(PrimArray SyntaxKind),
+  { tokKinds :: !(PrimArray TokenKind),
     tokTexts :: !(SmallArray ByteString)
   }
 
-newtype SyntaxKind = SyntaxKind Word16 deriving (Show, Eq, Ord, Prim)
+newtype TokenKind = TokenKind Word16 deriving (Show, Eq, Ord, Prim)
+
+newtype NodeKind = SyntaxKind Word16 deriving (Show, Eq, Ord, Prim)
 
 data SyntaxNode = SyntaxNode
   { syntaxNodeOffset :: {-# UNPACK #-} !Int,
