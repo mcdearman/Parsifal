@@ -2,28 +2,35 @@
 
 module Parsifal.Internal where
 
-import Data.Bits (Bits (shiftL, shiftR, (.&.), (.|.)))
 import Data.ByteString (ByteString)
+import qualified Data.ByteString as BS
 import Data.Maybe (listToMaybe, mapMaybe)
-import Data.Primitive (Prim, PrimArray, SmallArray)
-import Data.Primitive.PrimArray (indexPrimArray)
+import Data.Primitive (Prim)
+import Data.Traversable (mapAccumL)
 import Data.Word (Word16)
 
 newtype SyntaxKind = SyntaxKind Word16
   deriving (Show, Eq, Ord, Prim)
 
-newtype TokenKind = TokenKind Word16
-  deriving (Show, Eq, Ord, Prim)
+data Green = GreenToken Token | GreenNode Node deriving (Eq, Show, Ord)
 
-data GreenNode = GreenNode
-  { greenNodeKind :: {-# UNPACK #-} !SyntaxKind,
-    greenNodeChildren :: [Either Token GreenNode],
-    greenNodeWidth :: {-# UNPACK #-} !Word
+greenKind :: Green -> SyntaxKind
+greenKind (GreenToken (Token k _)) = k
+greenKind (GreenNode (Node k _ _)) = k
+
+greenChildren :: Green -> [Green]
+greenChildren (GreenToken _) = []
+greenChildren (GreenNode gn) = nodeChildren gn
+
+data Node = Node
+  { nodeKind :: {-# UNPACK #-} !SyntaxKind,
+    nodeChildren :: [Green],
+    nodeWidth :: {-# UNPACK #-} !Word
   }
   deriving (Show, Eq, Ord)
 
 data Token = Token
-  { tokenKind :: {-# UNPACK #-} !TokenKind,
+  { tokenKind :: {-# UNPACK #-} !SyntaxKind,
     tokenText :: !ByteString
   }
   deriving (Show, Eq, Ord)
@@ -31,23 +38,21 @@ data Token = Token
 data SyntaxNode = SyntaxNode
   { syntaxNodeOffset :: {-# UNPACK #-} !Int,
     syntaxNodeParent :: Maybe SyntaxNode,
-    syntaxNodeGreen :: !GreenNode
+    syntaxNodeGreen :: !Green
   }
   deriving (Show, Eq, Ord)
 
-nodeKind :: SyntaxNode -> SyntaxKind
-nodeKind node = greenNodeKind (syntaxNodeGreen node)
+syntaxNodeKind :: SyntaxNode -> SyntaxKind
+syntaxNodeKind node = greenKind $ syntaxNodeGreen node
 
-nodeChildren :: SyntaxNode -> [SyntaxNode]
-nodeChildren (SyntaxNode off p g) = map toSyntaxNode children
+syntaxNodeChildren :: SyntaxNode -> [SyntaxNode]
+syntaxNodeChildren n@(SyntaxNode off _ g) =
+  snd $
+    mapAccumL (\o c -> (o + childLength c, SyntaxNode o (Just n) c)) off (greenChildren g)
   where
-    children = [c | Right c <- greenNodeChildren g]
-    toSyntaxNode gn =
-      SyntaxNode
-        { syntaxNodeOffset = off,
-          syntaxNodeParent = Just (SyntaxNode off p g),
-          syntaxNodeGreen = gn
-        }
+    childLength :: Green -> Int
+    childLength (GreenToken (Token _ text)) = BS.length text
+    childLength (GreenNode (Node _ _ w)) = fromIntegral w
 
 findMap :: (a -> Maybe b) -> [a] -> Maybe b
 findMap f = listToMaybe . mapMaybe f
