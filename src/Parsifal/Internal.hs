@@ -39,8 +39,8 @@ data Token = Token
 
 data SyntaxNode = SyntaxNode
   { syntaxNodeOffset :: {-# UNPACK #-} !Int,
-    syntaxNodeParent :: Maybe SyntaxNode,
-    syntaxNodeGreen :: {-# UNPACK #-} !Green
+    syntaxNodeParent :: !(Maybe SyntaxNode),
+    syntaxNodeGreen :: !Green
   }
   deriving (Show, Eq, Ord)
 
