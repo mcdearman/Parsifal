@@ -7,6 +7,8 @@ import qualified Data.ByteString as BS
 import Data.Maybe (listToMaybe, mapMaybe)
 import Data.Primitive (Prim)
 import Data.Traversable (mapAccumL)
+import Data.Vector (Vector)
+import qualified Data.Vector as V
 import Data.Word (Word16)
 
 newtype SyntaxKind = SyntaxKind Word16
@@ -18,13 +20,13 @@ greenKind :: Green -> SyntaxKind
 greenKind (GreenToken (Token k _)) = k
 greenKind (GreenNode (Node k _ _)) = k
 
-greenChildren :: Green -> [Green]
-greenChildren (GreenToken _) = []
+greenChildren :: Green -> Vector Green
+greenChildren (GreenToken _) = V.empty
 greenChildren (GreenNode gn) = nodeChildren gn
 
 data Node = Node
   { nodeKind :: {-# UNPACK #-} !SyntaxKind,
-    nodeChildren :: [Green],
+    nodeChildren :: Vector Green,
     nodeWidth :: {-# UNPACK #-} !Word
   }
   deriving (Show, Eq, Ord)
@@ -38,14 +40,14 @@ data Token = Token
 data SyntaxNode = SyntaxNode
   { syntaxNodeOffset :: {-# UNPACK #-} !Int,
     syntaxNodeParent :: Maybe SyntaxNode,
-    syntaxNodeGreen :: !Green
+    syntaxNodeGreen :: {-# UNPACK #-} !Green
   }
   deriving (Show, Eq, Ord)
 
 syntaxNodeKind :: SyntaxNode -> SyntaxKind
 syntaxNodeKind node = greenKind $ syntaxNodeGreen node
 
-syntaxNodeChildren :: SyntaxNode -> [SyntaxNode]
+syntaxNodeChildren :: SyntaxNode -> Vector SyntaxNode
 syntaxNodeChildren n@(SyntaxNode off _ g) =
   snd $
     mapAccumL (\o c -> (o + childLength c, SyntaxNode o (Just n) c)) off (greenChildren g)

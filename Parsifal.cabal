@@ -1,51 +1,56 @@
-cabal-version:      3.0
-name:               Parsifal
-version:            0.1.0.0
-synopsis:           A CST and parser generator library
+cabal-version: 3.0
+name: Parsifal
+version: 0.1.0.0
+synopsis: A CST and parser generator library
 -- description:
-license:            BSD-3-Clause
-license-file:       LICENSE
-author:             mcdearman
-maintainer:         mcdearmanchris@gmail.com
+license: BSD-3-Clause
+license-file: LICENSE
+author: mcdearman
+maintainer: mcdearmanchris@gmail.com
 -- copyright:
-category:           Parsing
-build-type:         Simple
-extra-doc-files:    CHANGELOG.md
--- extra-source-files:
+category: Parsing
+build-type: Simple
+extra-doc-files: CHANGELOG.md
 
+-- extra-source-files:
 common warnings
-    ghc-options: -Wall
+  ghc-options: -Wall
 
 executable Parsifal
-    import:           warnings
-    main-is:          Main.hs
-    other-modules:
-      Parsifal
-      Parsifal.Gen
-      Parsifal.Internal
-      Parsifal.Parser
-      Parsifal.Ungrammar
-    default-extensions: 
-      OverloadedStrings
-      MagicHash
-      ScopedTypeVariables
-      LambdaCase
-      TupleSections
-      RecordWildCards
-      BangPatterns
-      PatternSynonyms
-      TypeFamilies
-      OrPatterns
-      ViewPatterns
-      MultilineStrings
-    build-depends:    
-      base ^>=4.21.0.0,
-      primitive,
-      containers,
-      bytestring,
-      megaparsec,
-      parser-combinators,
-      text,
-      pretty-simple,
-    hs-source-dirs:   src
-    default-language: Haskell2010
+  import: warnings
+  main-is: Main.hs
+  other-modules:
+    Parsifal
+    Parsifal.Gen
+    Parsifal.Internal
+    Parsifal.Parser
+    Parsifal.Ungrammar
+
+  default-extensions:
+    BangPatterns
+    LambdaCase
+    MagicHash
+    MultilineStrings
+    OrPatterns
+    OverloadedStrings
+    PatternSynonyms
+    RecordWildCards
+    ScopedTypeVariables
+    TupleSections
+    TypeFamilies
+    ViewPatterns
+
+  build-depends:
+    array,
+    base ^>=4.21.0.0,
+    bytestring,
+    containers,
+    megaparsec,
+    parser-combinators,
+    pretty-simple,
+    primitive,
+    text,
+    vector,
+
+  hs-source-dirs: src
+  default-language: Haskell2010
