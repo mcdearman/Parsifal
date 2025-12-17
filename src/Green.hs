@@ -59,18 +59,28 @@ syntaxNodeChildren n@(SyntaxNode off _ g) =
 findMap :: (a -> Maybe b) -> [a] -> Maybe b
 findMap f = listToMaybe . mapMaybe f
 
-pattern SyntaxKindTerm :: SyntaxKind
-pattern SyntaxKindTerm = SyntaxKind 0
-pattern SyntaxKindVar :: SyntaxKind
-pattern SyntaxKindVar = SyntaxKind 1
-pattern SyntaxKindLam :: SyntaxKind
-pattern SyntaxKindLam = SyntaxKind 2
-pattern SyntaxKindApp :: SyntaxKind
-pattern SyntaxKindApp = SyntaxKind 3
+pattern SyntaxKindGrammar :: SyntaxKind
+pattern SyntaxKindGrammar = SyntaxKind 0
+pattern SyntaxKindNode :: SyntaxKind
+pattern SyntaxKindNode = SyntaxKind 1
+pattern SyntaxKindRule :: SyntaxKind
+pattern SyntaxKindRule = SyntaxKind 2
 pattern SyntaxKindIdent :: SyntaxKind
-pattern SyntaxKindIdent = SyntaxKind 4
-pattern SyntaxKindBackslash :: SyntaxKind
-pattern SyntaxKindBackslash = SyntaxKind 5
-pattern SyntaxKindDot :: SyntaxKind
-pattern SyntaxKindDot = SyntaxKind 6
+pattern SyntaxKindIdent = SyntaxKind 3
+pattern SyntaxKindEq :: SyntaxKind
+pattern SyntaxKindEq = SyntaxKind 4
+pattern SyntaxKindTokenIdent :: SyntaxKind
+pattern SyntaxKindTokenIdent = SyntaxKind 5
+pattern SyntaxKindPipe :: SyntaxKind
+pattern SyntaxKindPipe = SyntaxKind 6
+pattern SyntaxKindQuestion :: SyntaxKind
+pattern SyntaxKindQuestion = SyntaxKind 7
+pattern SyntaxKindStar :: SyntaxKind
+pattern SyntaxKindStar = SyntaxKind 8
+pattern SyntaxKindLParen :: SyntaxKind
+pattern SyntaxKindLParen = SyntaxKind 9
+pattern SyntaxKindRParen :: SyntaxKind
+pattern SyntaxKindRParen = SyntaxKind 10
+pattern SyntaxKindColon :: SyntaxKind
+pattern SyntaxKindColon = SyntaxKind 11
 
