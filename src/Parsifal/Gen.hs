@@ -19,103 +19,71 @@ genModuleHeader :: Text -> Text
 genModuleHeader moduleName =
   Text.unlines
     [ "{-# LANGUAGE PatternSynonyms #-}",
+      "{-# LANGUAGE GeneralisedNewtypeDeriving #-}",
       "module " <> moduleName <> " where"
     ]
 
 genImportDecls :: Text
 genImportDecls =
   Text.unlines
-    [ "import Data.Bits (Bits (shiftL, shiftR, (.&.), (.|.)))",
-      "import Data.ByteString (ByteString)",
-      "import Data.Maybe (listToMaybe, mapMaybe)",
-      "import Data.Primitive (PrimArray, SmallArray)",
-      "import Data.Word (Word16)"
+    [ "import Data.ByteString (ByteString)",
+      "import qualified Data.ByteString as BS",
+      "import Data.Primitive (Prim)",
+      "import Data.Traversable (mapAccumL)",
+      "import Data.Vector (Vector)",
+      "import qualified Data.Vector as V",
+      "import Data.Word (Word16)",
+      "import Data.Maybe ( listToMaybe, mapMaybe )"
     ]
 
 genRedGreenTrees :: Text
 genRedGreenTrees =
   Text.unlines
     [ """
-      data GreenCtx = GreenCtx
-        { greenNodes :: !GreenNodes,
-          greenChildren :: !GreenChildren,
-          tokens :: !Tokens
+      newtype SyntaxKind = SyntaxKind Word16
+        deriving (Show, Eq, Ord, Prim)
+
+      data Green = GreenToken Token | GreenNode Node deriving (Eq, Show, Ord)
+
+      greenKind :: Green -> SyntaxKind
+      greenKind (GreenToken (Token k _)) = k
+      greenKind (GreenNode (Node k _ _)) = k
+
+      greenChildren :: Green -> Vector Green
+      greenChildren (GreenToken _) = V.empty
+      greenChildren (GreenNode gn) = nodeChildren gn
+
+      data Node = Node
+        { nodeKind :: {-# UNPACK #-} !SyntaxKind,
+          nodeChildren :: Vector Green,
+          nodeWidth :: {-# UNPACK #-} !Word
         }
+        deriving (Show, Eq, Ord)
 
-      data GreenNodes = GreenNodes
-        { nodeKinds :: !(PrimArray NodeKind),
-          nodeChildStarts :: !(PrimArray Int),
-          nodeChildCounts :: !(PrimArray Int),
-          nodeWidths :: !(PrimArray Int)
+      data Token = Token
+        { tokenKind :: {-# UNPACK #-} !SyntaxKind,
+          tokenText :: !ByteString
         }
-
-      type ChildWord = Word
-
-      packTok :: TokenId -> ChildWord
-      packTok (TokenId !ix) = (fromIntegral ix `shiftL` 1) .|. 0
-
-      packNode :: NodeId -> ChildWord
-      packNode (NodeId !ix) = (fromIntegral ix `shiftL` 1) .|. 1
-
-      isNode :: ChildWord -> Bool
-      isNode !w = (w .&. 1) /= 0
-
-      childIx :: ChildWord -> Int
-      childIx !w = fromIntegral (w `shiftR` 1)
-
-      data NodeChild = CToken !TokenId | CNode !NodeId
-
-      decodeChild :: ChildWord -> NodeChild
-      decodeChild !w
-        | isNode w = CNode (NodeId (childIx w))
-        | otherwise = CToken (TokenId (childIx w))
-
-      pattern Child :: NodeChild -> ChildWord
-      pattern Child cref <- (decodeChild -> cref)
-        where
-          Child (CToken (TokenId ix)) = packTok (TokenId ix)
-          Child (CNode (NodeId ix)) = packNode (NodeId ix)
-
-      data GreenNode = GreenNode
-        { nodeKind :: {-# UNPACK #-} !NodeKind,
-          nodeChildren :: ![ChildWord],
-          nodeWidth :: {-# UNPACK #-} !Int
-        }
-
-      decodeGreenNode :: GreenCtx -> NodeId -> GreenNode
-      decodeGreenNode ctx (NodeId ix) =
-        let kind = nodeKinds (greenNodes ctx) `indexPrimArray` ix
-            start = nodeChildStarts (greenNodes ctx) `indexPrimArray` ix
-            count = nodeChildCounts (greenNodes ctx) `indexPrimArray` ix
-            width = nodeWidths (greenNodes ctx) `indexPrimArray` ix
-            children = indexGreenChildren (greenChildren ctx) start count
-         in GreenNode kind children width
-
-      newtype NodeId = NodeId Int deriving (Show, Eq, Ord)
-
-      newtype TokenId = TokenId Int deriving (Show, Eq, Ord)
-
-      newtype GreenChildren = GreenChildren (PrimArray ChildWord)
-
-      indexGreenChildren :: GreenChildren -> Int -> Int -> [ChildWord]
-      indexGreenChildren (GreenChildren arr) start count =
-        [arr `indexPrimArray` (start + i) | i <- [0 .. count - 1]]
-
-      data Tokens = Tokens
-        { tokKinds :: !(PrimArray TokenKind),
-          tokTexts :: !(SmallArray ByteString)
-        }
-
-      newtype TokenKind = TokenKind Word16 deriving (Show, Eq, Ord, Prim)
-
-      newtype NodeKind = SyntaxKind Word16 deriving (Show, Eq, Ord, Prim)
+        deriving (Show, Eq, Ord)
 
       data SyntaxNode = SyntaxNode
         { syntaxNodeOffset :: {-# UNPACK #-} !Int,
-          syntaxNodeParent :: Maybe SyntaxNode,
-          syntaxNodeGreen :: {-# UNPACK #-} !NodeId
+          syntaxNodeParent :: !(Maybe SyntaxNode),
+          syntaxNodeGreen :: !Green
         }
         deriving (Show, Eq, Ord)
+
+      syntaxNodeKind :: SyntaxNode -> SyntaxKind
+      syntaxNodeKind node = greenKind $ syntaxNodeGreen node
+
+      syntaxNodeChildren :: SyntaxNode -> Vector SyntaxNode
+      syntaxNodeChildren n@(SyntaxNode off _ g) =
+        snd $
+          mapAccumL (\\o c -> (o + childLength c, SyntaxNode o (Just n) c)) off (greenChildren g)
+        where
+          childLength :: Green -> Int
+          childLength (GreenToken (Token _ text)) = BS.length text
+          childLength (GreenNode (Node _ _ w)) = fromIntegral w
 
       findMap :: (a -> Maybe b) -> [a] -> Maybe b
       findMap f = listToMaybe . mapMaybe f

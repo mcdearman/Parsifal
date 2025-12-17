@@ -8,11 +8,11 @@ import Text.Pretty.Simple (pPrint)
 
 main :: IO ()
 main = do
-  contents <- readFile "examples/idyll.ug"
+  contents <- readFile "examples/lc.ug"
   case parseGrammar (pack contents) of
     Left err -> putStrLn $ "Error parsing grammar: " ++ errorBundlePretty err
     Right grammar ->
-      writeFile "src/Green.hs" $ genModule grammar "Parsifal.Green"
+      writeFile "src/Green.hs" $ genModule grammar "Green"
 
 -- files <- listDirectory "."
 --   -- Keep only regular files with allowed grammar extensions
