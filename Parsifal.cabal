@@ -29,6 +29,7 @@ executable Parsifal
 
   default-extensions:
     BangPatterns
+    FlexibleInstances
     LambdaCase
     MagicHash
     MultilineStrings
@@ -39,7 +40,9 @@ executable Parsifal
     ScopedTypeVariables
     TupleSections
     TypeFamilies
+    TypeSynonymInstances
     ViewPatterns
+    OverloadedRecordDot 
 
   build-depends:
     array,

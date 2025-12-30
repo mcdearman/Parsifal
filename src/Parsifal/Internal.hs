@@ -9,10 +9,17 @@ import Data.Primitive (Prim)
 import Data.Traversable (mapAccumL)
 import Data.Vector (Vector)
 import qualified Data.Vector as V
-import Data.Word (Word16)
+import Data.Word (Word16, Word32)
 
 newtype SyntaxKind = SyntaxKind Word16
   deriving (Show, Eq, Ord, Prim)
+
+data Node = Node
+  { nodeKind :: {-# UNPACK #-} !SyntaxKind,
+    nodeChildren :: Vector Green,
+    nodeWidth :: {-# UNPACK #-} !Word32
+  }
+  deriving (Show, Eq, Ord)
 
 data Green = GreenToken Token | GreenNode Node deriving (Eq, Show, Ord)
 
@@ -23,13 +30,6 @@ greenKind (GreenNode (Node k _ _)) = k
 greenChildren :: Green -> Vector Green
 greenChildren (GreenToken _) = V.empty
 greenChildren (GreenNode gn) = nodeChildren gn
-
-data Node = Node
-  { nodeKind :: {-# UNPACK #-} !SyntaxKind,
-    nodeChildren :: Vector Green,
-    nodeWidth :: {-# UNPACK #-} !Word
-  }
-  deriving (Show, Eq, Ord)
 
 data Token = Token
   { tokenKind :: {-# UNPACK #-} !SyntaxKind,
@@ -58,3 +58,11 @@ syntaxNodeChildren n@(SyntaxNode off _ g) =
 
 findMap :: (a -> Maybe b) -> [a] -> Maybe b
 findMap f = listToMaybe . mapMaybe f
+
+class AstNode a where
+  castToNode :: SyntaxNode -> Maybe a
+  syntaxNode :: a -> SyntaxNode
+
+class AstToken a where
+  castToToken :: SyntaxNode -> Maybe a
+  syntaxToken :: a -> Token
