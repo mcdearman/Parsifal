@@ -25,7 +25,6 @@ executable Parsifal
     Parsifal.Internal
     Parsifal.Parser
     Parsifal.Ungrammar
-    Green
 
   default-extensions:
     BangPatterns

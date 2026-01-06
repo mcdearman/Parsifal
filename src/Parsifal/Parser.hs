@@ -1,12 +1,13 @@
 module Parsifal.Parser (parseGrammar) where
 
 import Control.Applicative (Alternative ((<|>)), empty)
+import Control.Monad.Combinators (skipManyTill)
 import Control.Monad.Combinators.Expr (Operator (..), makeExprParser)
 import Data.Functor (void, ($>))
 import Data.Text (Text, pack)
 import Data.Void
 import Parsifal.Ungrammar
-import Text.Megaparsec (MonadParsec (eof, lookAhead, takeWhile1P, takeWhileP, try), Parsec, between, many, parse, some, someTill)
+import Text.Megaparsec (MonadParsec (eof, lookAhead, takeWhile1P, takeWhileP, try, withRecovery), Parsec, anySingle, between, many, parse, some, someTill)
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
 import Text.Megaparsec.Debug (MonadParsecDbg (dbg))
@@ -18,13 +19,26 @@ parseGrammar :: Text -> Either (ParseErrorBundle Text Void) Grammar
 parseGrammar = parse grammar ""
 
 grammar :: Parser Grammar
-grammar = Grammar <$> ((:) <$> (sc *> node) <*> some node)
+grammar = Grammar <$> ((:) <$> (sc *> node) <*> many nodeR) <* eof
+
+-- node with recovery
+nodeR :: Parser Node
+nodeR = withRecovery handler node
+  where
+    handler err = do
+      dbg ("Error parsing node: " ++ show err) syncToNextNode
+      -- syncToNextNode
+      pure $ Node "ErrorNode" (RuleSeq [])
 
 node :: Parser Node
 node = Node <$> upperIdent <* symbol "=" <*> rule
 
-nodeHeaderLA :: Parser ()
-nodeHeaderLA = lookAhead . try $ upperIdent *> symbol "=" $> ()
+syncToNextNode :: Parser ()
+syncToNextNode =
+  skipManyTill anySingle (nodeStart <|> eof)
+
+nodeStart :: Parser ()
+nodeStart = void $ lookAhead . try $ upperIdent *> symbol "="
 
 barLA, rparenLA, eofLA :: Parser ()
 barLA = lookAhead (void (symbol "|"))
@@ -42,7 +56,7 @@ rule = altRule
         _ -> RuleAlt (x : xs)
 
     seqRule = do
-      xs <- someTill postfix (nodeHeaderLA <|> barLA <|> rparenLA <|> eofLA)
+      xs <- someTill postfix (nodeStart <|> barLA <|> rparenLA <|> eofLA)
       pure $ case xs of
         [x] -> x
         _ -> RuleSeq xs
